@@ -1,0 +1,80 @@
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	
+)
+
+func main() {
+
+	var playAgain bool = true
+	var bestScore int = -1
+	
+	for playAgain {
+		fmt.Println("\nselect difficulty of the gane:")
+		fmt.Println("1: Easy till 50")
+		fmt.Println("2: Medium till 100")
+		fmt.Println("3: Hard till 200")
+		var difficulty int
+		fmt.Print("Choose difficulty level (1-3): ")
+		fmt.Scan(&difficulty)
+		var maxRange int
+		switch difficulty {
+		case 1:
+			maxRange = 50
+		case 2:
+			maxRange = 100
+		case 3:
+			maxRange = 200
+		default:
+			maxRange = 100
+		}
+		
+		fmt.Print("Enter maximum number of tries: ")
+		var maxTries int
+		fmt.Scan(&maxTries)
+		
+		target := rand.Intn(maxRange) +1
+		attempts := 0
+		fmt.Printf("\nGuess a number between 1 and %d\n", maxRange)
+		
+		for attempts < maxTries {
+			var guess int
+			fmt.Print("Enter your guess: ")
+			fmt.Scan(&guess)
+			
+			if guess < 1 || guess > maxRange {
+				fmt.Printf("Please enter a number between 1 and %d\n", maxRange)
+				continue
+			}
+			
+			attempts++
+			
+			if guess < target {
+				fmt.Println("too low!")
+			} else if guess > target {
+				fmt.Println("too high!")
+			} else {
+				fmt.Printf("\ncorect you guessed the number in %d attempts!\n", attempts)
+				if bestScore == -1 || attempts < bestScore {
+					bestScore = attempts
+					fmt.Printf("new best score: %d attempts!\n", bestScore)
+				}
+				break
+			}
+			
+			if attempts == maxTries {
+				fmt.Printf("\nyou lost! The correct number is %d\n", target)
+			}
+		}
+		
+		fmt.Print("\n play again? (1 for yes, 0 for no): ")
+		var playChoice int
+		fmt.Scan(&playChoice)
+		playAgain = playChoice == 1
+	}
+	
+	fmt.Printf("\nthank you  for playingyour Best score: %d attempts\n", bestScore)
+}
+
