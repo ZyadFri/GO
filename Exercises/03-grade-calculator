@@ -1,0 +1,63 @@
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "os"
+    "strings"
+)
+
+func main() {
+    reader := bufio.NewReader(os.Stdin)
+    
+    for {
+        var grades [5]float64
+        var sum float64 = 0
+
+        fmt.Println("\nEnter 5 grades (0 to 100):")
+
+        for i := 0; i < 5; i++ {
+            for {
+                fmt.Printf("Grade %d: ", i+1)
+                input, _ := reader.ReadString('\n')
+                input = strings.TrimSpace(input)
+                
+                var grade float64
+                _, err := fmt.Sscanf(input, "%f", &grade)
+                if err == nil && grade >= 0 && grade <= 100 {
+                    grades[i] = grade
+                    sum += grade
+                    break
+                }
+                fmt.Println("Invalid input. Please enter a number between 0 and 100.")
+            }
+        }
+
+        average := sum / 5
+        fmt.Printf("\nAverage Grade: %.2f\n", average)
+
+        letterGrade := ""
+        switch {
+        case average >= 90:
+            letterGrade = "A"
+        case average >= 80:
+            letterGrade = "B"
+        case average >= 70:
+            letterGrade = "C"
+        case average >= 60:
+            letterGrade = "D"
+        default:
+            letterGrade = "F"
+        }
+
+        fmt.Printf("Letter Grade: %s\n", letterGrade)
+
+        fmt.Print("\nDo you want to calculate another grade? (yes/no): ")
+        choice, _ := reader.ReadString('\n')
+        choice = strings.ToLower(strings.TrimSpace(choice))
+        if choice == "no" || choice == "n" {
+            fmt.Println("Exiting program. Goodbye!")
+            break
+        }
+    }
+}
