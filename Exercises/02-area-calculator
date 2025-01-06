@@ -1,0 +1,19 @@
+package main
+
+import "fmt"
+
+func main() {
+    var length, width float64
+
+    fmt.Print("Enter the length of the rectangle (in meters): ")
+    fmt.Scanln(&length)
+
+    fmt.Print("Enter the width of the rectangle (in meters): ")
+    fmt.Scanln(&width)
+
+    areaMeters := length * width
+    fmt.Printf("Area of the rectangle: %.2f square meters\n", areaMeters)
+
+    areaFeet := areaMeters * 3.28
+    fmt.Printf("Area of the rectangle: %.2f square feet\n", areaFeet)
+}
