@@ -1,0 +1,26 @@
+package main
+
+import (
+	"fmt"
+)
+
+func wordFrequencies(words []string) map[string]int {
+
+	frequencies := make(map[string]int)
+
+	for _, word := range words {
+		frequencies[word]++
+	}
+
+	
+	return frequencies
+}
+
+func main() {
+	words := []string{"apple", "banana", "apple", "orange", "banana", "apple"}
+	frequencies := wordFrequencies(words)
+	fmt.Println("Word Frequencies:")
+	for word, freq := range frequencies {
+		fmt.Printf("%s: %d\n", word, freq)
+	}
+}
