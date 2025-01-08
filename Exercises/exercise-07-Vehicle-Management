@@ -1,0 +1,75 @@
+package main
+
+import (
+	"fmt"
+)
+
+type Vehicle struct {
+	Make  string
+	Model string
+	Year  int
+}
+
+
+type Insurable interface {
+	CalculateInsurance() float64
+}
+
+
+type Printable interface {
+	Details() string
+}
+
+type Car struct {
+	Vehicle
+	NumberOfDoors int
+}
+
+
+func (c Car) CalculateInsurance() float64 {
+	return float64(2025-c.Year) * float64(c.NumberOfDoors) * 50.0
+}
+func (c Car) Details() string {
+	return fmt.Sprintf("Car: %s %s (%d) - Doors: %d", c.Make, c.Model, c.Year, c.NumberOfDoors)
+}
+type Truck struct {
+	Vehicle
+	PayloadCapacity float64
+}
+func (t Truck) CalculateInsurance() float64 {
+	return float64(2025-t.Year) * t.PayloadCapacity * 20.0
+}
+func (t Truck) Details() string {
+	return fmt.Sprintf("Truck: %s %s (%d) - Payload Capacity: %.2f tons", t.Make, t.Model, t.Year, t.PayloadCapacity)
+}
+func PrintAll(p []Printable) {
+	for _, item := range p {
+		fmt.Println(item.Details())
+	}
+}
+
+func main() {
+	car := Car{
+		Vehicle: Vehicle{
+			Make:  "Toyota",
+			Model: "Corolla",
+			Year:  2020,
+		},
+		NumberOfDoors: 4,
+	}
+
+	truck := Truck{
+		Vehicle: Vehicle{
+			Make:  "Ford",
+			Model: "F-150",
+			Year:  2018,
+		},
+		PayloadCapacity: 3.5,
+	}
+
+	vehicles := []Printable{car, truck}
+
+	PrintAll(vehicles)
+	fmt.Printf("Car Insurance: $%.2f\n", car.CalculateInsurance())
+	fmt.Printf("Truck Insurance: $%.2f\n", truck.CalculateInsurance())
+}
