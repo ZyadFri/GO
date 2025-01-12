@@ -153,17 +153,181 @@ Below are **very detailed** steps:
          - POSTGRES_PASSWORD=secret
        ports:
          - "5432:5432"
-## In your terminal:
-```bash
-docker-compose up -d
-### Run Go Server
-go mod tidy
-go run cmd/server/main.go
-You’ll see logs like:
-Starting sales reporter...
-Starting server on port 8080...
+1.  bashCopier le codedocker-compose up -dThis spins up Postgres on port 5432 with user postgres and password secret.
+    
 
-## C) Confirm /ping
-curl http://localhost:8080/ping
-You should get back pong
+**Alternatively**, install Postgres locally and create a bookstore database with a user/password matching the connection string in main.go (e.g. postgres://postgres:secret@localhost:5432/bookstore?sslmode=disable).
+
+### B) Run Go Server
+
+1.  bashCopier le codego mod tidygo run cmd/server/main.go
+    
+2.  csharpCopier le codeStarting sales reporter...Starting server on port 8080...That means the migrations ran, tables were created if needed, and now the server is listening on localhost:8080.
+    
+
+### C) Confirm /ping
+
+Open a browser or cURL:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   bashCopier le codecurl http://localhost:8080/ping   `
+
+You should get back pong.
+
+### D) Logging In (JWT)
+
+1.  bashCopier le codecurl -X POST \\ -H "Content-Type: application/json" \\ -d '{"username":"admin","password":"password"}' \\ http://localhost:8080/api/login
+    
+2.  The response includes: {"token":""}.
+    
+3.  makefileCopier le codeAuthorization: Bearer to avoid 401 Unauthorized.
+    
+
+Testing the App
+---------------
+
+### Option 1: test\_all.sh
+
+We provide a script named test\_all.sh that runs **many** cURL requests in sequence:
+
+1.  bashCopier le codechmod +x test\_all.sh
+    
+2.  bashCopier le code./test\_all.sh
+    
+3.  It will:
+    
+    *   Ping the server
+        
+    *   Login to get a JWT
+        
+    *   Create authors, books, customers, orders
+        
+    *   Update them
+        
+    *   Delete some resources
+        
+    *   Show advanced searches
+        
+    *   Finally, fetch reports.
+        
+
+If you’re on **Windows** without WSL, you can do:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   bashCopier le codebash test_all.sh   `
+
+in **Git Bash**.
+
+The script prints out each HTTP response. Look for 200 OK, 201 Created, etc.
+
+### Option 2: Manual cURL/Postman Tests
+
+*   **Login** to get your token.
+    
+*   **Hit** /api/books with GET, POST, etc.
+    
+*   **Use** Authorization: Bearer in each request.
+    
+*   bashCopier le codecurl -H "Authorization: Bearer " "http://localhost:8080/api/books?min\_stock=10&min\_price=5&published\_after=2022-01-01T00:00:00Z"
+    
+
+Enhancements & Admin Credentials
+--------------------------------
+
+*   **Admin Credentials**: The app uses admin/password as a hardcoded user. In a real system, you’d store users in the DB.
+    
+*   **Migration from JSON**: If you previously had JSON files (e.g. authors.json, books.json), you can remove them now since you’re fully on Postgres.
+    
+*   **Auto Price Adjustments**: If you want to see the top sellers’ price go up by +10%, place multiple orders for the same book. Wait until the SalesReporter triggers (by default every 24 minutes). Check logs to see "Adjusted price for Book ID=...".
+    
+
+Screenshots
+-----------
+
+1.  bashCopier le codedocker-compose up -dThis spins up Postgres on port 5432 with user postgres and password secret.
+    
+
+**Alternatively**, install Postgres locally and create a bookstore database with a user/password matching the connection string in main.go (e.g. postgres://postgres:secret@localhost:5432/bookstore?sslmode=disable).
+
+### B) Run Go Server
+
+1.  bashCopier le codego mod tidygo run cmd/server/main.go
+    
+2.  csharpCopier le codeStarting sales reporter...Starting server on port 8080...That means the migrations ran, tables were created if needed, and now the server is listening on localhost:8080.
+    
+
+### C) Confirm /ping
+
+Open a browser or cURL:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   bashCopier le codecurl http://localhost:8080/ping   `
+
+You should get back pong.
+
+### D) Logging In (JWT)
+
+1.  bashCopier le codecurl -X POST \\ -H "Content-Type: application/json" \\ -d '{"username":"admin","password":"password"}' \\ http://localhost:8080/api/login
+    
+2.  The response includes: {"token":""}.
+    
+3.  makefileCopier le codeAuthorization: Bearer to avoid 401 Unauthorized.
+    
+
+Testing the App
+---------------
+
+### Option 1: test\_all.sh
+
+We provide a script named test\_all.sh that runs **many** cURL requests in sequence:
+
+1.  bashCopier le codechmod +x test\_all.sh
+    
+2.  bashCopier le code./test\_all.sh
+    
+3.  It will:
+    
+    *   Ping the server
+        
+    *   Login to get a JWT
+        
+    *   Create authors, books, customers, orders
+        
+    *   Update them
+        
+    *   Delete some resources
+        
+    *   Show advanced searches
+        
+    *   Finally, fetch reports.
+        
+
+If you’re on **Windows** without WSL, you can do:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   bashCopier le codebash test_all.sh   `
+
+in **Git Bash**.
+
+The script prints out each HTTP response. Look for 200 OK, 201 Created, etc.
+
+### Option 2: Manual cURL/Postman Tests
+
+*   **Login** to get your token.
+    
+*   **Hit** /api/books with GET, POST, etc.
+    
+*   **Use** Authorization: Bearer in each request.
+    
+*   bashCopier le codecurl -H "Authorization: Bearer " "http://localhost:8080/api/books?min\_stock=10&min\_price=5&published\_after=2022-01-01T00:00:00Z"
+    
+
+Enhancements & Admin Credentials
+--------------------------------
+
+*   **Admin Credentials**: The app uses admin/password as a hardcoded user. In a real system, you’d store users in the DB.
+    
+*   **Migration from JSON**: If you previously had JSON files (e.g. authors.json, books.json), you can remove them now since you’re fully on Postgres.
+    
+*   **Auto Price Adjustments**: If you want to see the top sellers’ price go up by +10%, place multiple orders for the same book. Wait until the SalesReporter triggers (by default every 24 minutes). Check logs to see "Adjusted price for Book ID=...".
+    
+
+Screenshots
+-----------
 
