@@ -1,0 +1,488 @@
+[
+  {
+    "timestamp": "2025-01-11T16:58:51.6740471+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:00:51.6746835+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:02:51.6745223+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:04:51.6744528+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:06:51.674198+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:08:51.6746748+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:10:51.6749083+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:12:51.6743718+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:14:51.674247+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:16:51.67419+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:18:51.6744237+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:20:51.6741782+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:22:51.6741392+01:00",
+    "total_revenue": 0,
+    "total_orders": 0,
+    "top_selling_books": []
+  },
+  {
+    "timestamp": "2025-01-11T17:24:51.6741012+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T17:26:51.6747169+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T17:28:51.6744786+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T17:30:51.6744704+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T17:32:51.6744984+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T17:34:51.6743864+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T17:36:51.6745786+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T17:38:51.67438+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T18:44:50.9766883+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T20:12:45.89281+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T20:40:08.615467+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T21:04:06.556189+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T21:36:05.526996+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T21:50:33.293312+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T22:01:12.436201+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T22:11:37.8963683+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-01-11T22:11:54.5469219+01:00",
+    "total_revenue": 79.98,
+    "total_orders": 1,
+    "top_selling_books": [
+      {
+        "book": {
+          "id": 2,
+          "title": "Clean Code",
+          "author": {
+            "id": 0,
+            "first_name": "",
+            "last_name": "",
+            "bio": ""
+          },
+          "genres": null,
+          "published_at": "0001-01-01T00:00:00Z",
+          "price": 39.99,
+          "stock": 0
+        },
+        "quantity_sold": 2
+      }
+    ]
+  }
+]

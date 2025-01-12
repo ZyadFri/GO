@@ -1,0 +1,4 @@
+[31mERROR[0m 2025/01/10 15:37:04 C:/Users/PRO/Documents/GoProjects/bookstore/pkg/utils/logger.go:92: [main.go:72] Failed to initialize book store: failed to load books: json: cannot unmarshal object into Go value of type []models.Book
+[31mERROR[0m 2025/01/10 15:42:16 C:/Users/PRO/Documents/GoProjects/bookstore/pkg/utils/logger.go:92: [main.go:72] Failed to initialize book store: failed to load books: json: cannot unmarshal object into Go value of type []models.Book
+[31mERROR[0m 2025/01/11 00:26:15 C:/Users/PRO/Documents/GoProjects/bookstore/pkg/utils/logger.go:92: [main.go:91] Failed to initialize report store: failed to load reports: unexpected end of JSON input
+[31mERROR[0m 2025/01/11 20:12:31 /Users/samialachgar/Desktop/bookstore/pkg/utils/logger.go:92: [main.go:91] Failed to initialize report store: failed to load reports: unexpected end of JSON input

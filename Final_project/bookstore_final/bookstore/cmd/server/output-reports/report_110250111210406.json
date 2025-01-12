@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-01-11T21:04:06.556189+01:00",
+  "total_revenue": 79.98,
+  "total_orders": 1,
+  "top_selling_books": [
+    {
+      "book": {
+        "id": 2,
+        "title": "Clean Code",
+        "author": {
+          "id": 0,
+          "first_name": "",
+          "last_name": "",
+          "bio": ""
+        },
+        "genres": null,
+        "published_at": "0001-01-01T00:00:00Z",
+        "price": 39.99,
+        "stock": 0
+      },
+      "quantity_sold": 2
+    }
+  ]
+}
