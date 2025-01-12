@@ -230,9 +230,10 @@ The script prints out each HTTP response. Look for 200 OK, 201 Created, etc.
     
 
 
+### Screenshots
 
+## Ping (Unprotected)
+![image](https://github.com/user-attachments/assets/56aecbc8-0ed5-42c9-9f82-b21bffecfbe6)
 
-
-    
 
 
