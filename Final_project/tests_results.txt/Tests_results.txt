@@ -1,0 +1,410 @@
+=============================
+1) Ping the server (unprotected)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100     4  100     4    0     0   2567      0 --:--:-- --:--:-- --:--:--  4000HTTP/1.1 200 OK
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+Content-Length: 4
+Content-Type: text/plain; charset=utf-8
+
+pong
+
+
+
+=============================
+2) Login to retrieve JWT
+=============================
+Login response: {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNzM2NzgyNjA1LCJpYXQiOjE3MzY2OTYyMDV9._b0ABZTrpeYz8vqppcRsrzyyp6c6dpxfOC8WGOsRwOY"}
+Token extracted: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNzM2NzgyNjA1LCJpYXQiOjE3MzY2OTYyMDV9._b0ABZTrpeYz8vqppcRsrzyyp6c6dpxfOC8WGOsRwOY
+
+
+
+=============================
+3) Create a new author (POST /api/authors)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   142  100    75  100    67  12327  11012 --:--:-- --:--:-- --:--:-- 23666HTTP/1.1 201 Created
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+Content-Length: 75
+
+{"id":4,"first_name":"Jane","last_name":"Austen","bio":"English novelist"}
+
+
+
+
+=============================
+List all authors (GET /api/authors)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   245  100   245    0     0  83532      0 --:--:-- --:--:-- --:--:--  119kHTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+Content-Length: 245
+
+[{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},{"id":3,"first_name":"Isaac","last_name":"Asimov","bio":"Famous sci-fi author"},{"id":4,"first_name":"Jane","last_name":"Austen","bio":"English novelist"}]
+
+
+
+
+=============================
+Create another author (POST /api/authors)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   152  100    80  100    72  15479  13931 --:--:-- --:--:-- --:--:-- 30400HTTP/1.1 201 Created
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+Content-Length: 80
+
+{"id":5,"first_name":"Isaac","last_name":"Asimov","bio":"Famous sci-fi author"}
+
+
+
+
+List all authors again (GET /api/authors)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   325  100   325    0     0   105k      0 --:--:-- --:--:-- --:--:--  158kHTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+Content-Length: 325
+
+[{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},{"id":3,"first_name":"Isaac","last_name":"Asimov","bio":"Famous sci-fi author"},{"id":4,"first_name":"Jane","last_name":"Austen","bio":"English novelist"},{"id":5,"first_name":"Isaac","last_name":"Asimov","bio":"Famous sci-fi author"}]
+
+
+
+
+=============================
+Get author by ID (GET /api/authors/1)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    88  100    88    0     0  24879      0 --:--:-- --:--:-- --:--:-- 29333HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+Content-Length: 88
+
+{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"}
+
+
+
+
+=============================
+Update author #1 (PUT /api/authors/1)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   168  100    88  100    80  18318  16652 --:--:-- --:--:-- --:--:-- 42000HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+Content-Length: 88
+
+{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"}
+
+
+
+
+=============================
+Delete author #2 (DELETE /api/authors/2)
+(WARNING: if the author is referenced by a book, might fail due to foreign key checks)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0HTTP/1.1 204 No Content
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:45 GMT
+
+
+
+
+
+=============================
+4) Create a new book (POST /api/books)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   302  100   174  100   128  34305  25236 --:--:-- --:--:-- --:--:-- 60400HTTP/1.1 201 Created
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 174
+
+{"id":3,"title":"Pride and Prejudice","author":{"id":1,"first_name":"","last_name":"","bio":""},"genres":null,"published_at":"1813-01-28T00:00:00Z","price":9.99,"stock":100}
+
+
+
+
+List all books (GET /api/books)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   413  100   413    0     0   121k      0 --:--:-- --:--:-- --:--:--  134kHTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 413
+
+[{"id":2,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"1815-12-23T00:00:00Z","price":12.09,"stock":48},{"id":3,"title":"Pride and Prejudice","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"1813-01-28T00:00:00Z","price":9.99,"stock":100}]
+
+
+
+
+=============================
+Create another book
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   272  100   159  100   113  30303  21536 --:--:-- --:--:-- --:--:-- 54400HTTP/1.1 201 Created
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 159
+
+{"id":4,"title":"Emma","author":{"id":1,"first_name":"","last_name":"","bio":""},"genres":null,"published_at":"1815-12-23T00:00:00Z","price":10.99,"stock":50}
+
+
+
+
+List all books again
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   611  100   611    0     0   193k      0 --:--:-- --:--:-- --:--:--  198kHTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 611
+
+[{"id":2,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"1815-12-23T00:00:00Z","price":12.09,"stock":48},{"id":3,"title":"Pride and Prejudice","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"1813-01-28T00:00:00Z","price":9.99,"stock":100},{"id":4,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"1815-12-23T00:00:00Z","price":10.99,"stock":50}]
+
+
+
+
+=============================
+Update book #1 (PUT /api/books/1)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   324  100   185  100   139  48581  36502 --:--:-- --:--:-- --:--:--  105kHTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 185
+
+{"id":1,"title":"Pride and Prejudice (Updated)","author":{"id":1,"first_name":"","last_name":"","bio":""},"genres":null,"published_at":"1813-01-28T00:00:00Z","price":11.99,"stock":200}
+
+
+
+
+=============================
+Get book #1 (GET /api/books/1)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    26  100    26    0     0   6527      0 --:--:-- --:--:-- --:--:--  8666HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Vary: Origin
+X-Content-Type-Options: nosniff
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 26
+
+book not found with id: 1
+
+
+
+
+=============================
+Search for books with min_price=10, max_price=20, published_after=1814-01-01T00:00:00Z
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   398  100   398    0     0  93405      0 --:--:-- --:--:-- --:--:-- 99500HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 398
+
+[{"id":2,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"1815-12-23T00:00:00Z","price":12.09,"stock":48},{"id":4,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"1815-12-23T00:00:00Z","price":10.99,"stock":50}]
+
+
+
+
+=============================
+Delete book #1
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0HTTP/1.1 204 No Content
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+
+
+
+
+
+=============================
+5) Create a new customer (POST /api/customers)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   399  100   209  100   190  38876  35342 --:--:-- --:--:-- --:--:-- 79800HTTP/1.1 201 Created
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 209
+
+{"id":2,"name":"John Doe","email":"john.doe@example.com","address":{"street":"123 Main St","city":"Boston","state":"MA","postal_code":"02108","country":"USA"},"created_at":"2025-01-12T16:36:46.6559927+01:00"}
+
+
+
+
+List all customers (GET /api/customers)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   408  100   408    0     0   121k      0 --:--:-- --:--:-- --:--:--  132kHTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 408
+
+[{"id":1,"name":"John Doe","email":"john.doe@example.com","address":{"street":"123 Main St","city":"Boston","state":"MA","postal_code":"02108","country":"USA"},"created_at":"2025-01-12T16:27:24.750477Z"},{"id":2,"name":"John Doe","email":"john.doe@example.com","address":{"street":"123 Main St","city":"Boston","state":"MA","postal_code":"02108","country":"USA"},"created_at":"2025-01-12T16:36:46.655993Z"}]
+
+
+
+
+=============================
+Update customer #1 (PUT /api/customers/1)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   425  100   219  100   206  31849  29959 --:--:-- --:--:-- --:--:-- 70833HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 219
+
+{"id":1,"name":"John Doe (Updated)","email":"john.newemail@example.com","address":{"street":"456 Park Ave","city":"Boston","state":"MA","postal_code":"02109","country":"USA"},"created_at":"2025-01-12T16:27:24.750477Z"}
+
+
+
+
+Get customer #1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   219  100   219    0     0  48655      0 --:--:-- --:--:-- --:--:-- 54750HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:46 GMT
+Content-Length: 219
+
+{"id":1,"name":"John Doe (Updated)","email":"john.newemail@example.com","address":{"street":"456 Park Ave","city":"Boston","state":"MA","postal_code":"02109","country":"USA"},"created_at":"2025-01-12T16:27:24.750477Z"}
+
+
+
+
+=============================
+6) Create an order (POST /api/orders)
+=============================
+(We assume you have some existing books with ID #2, etc.)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   527  100   427  100   100  25172   5895 --:--:-- --:--:-- --:--:-- 32937HTTP/1.1 201 Created
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:47 GMT
+Content-Length: 427
+
+{"id":2,"customer":{"id":1,"name":"","email":"","address":{"street":"","city":"","state":"","postal_code":"","country":""},"created_at":"0001-01-01T00:00:00Z"},"items":[{"book":{"id":2,"title":"","author":{"id":0,"first_name":"","last_name":"","bio":""},"genres":null,"published_at":"0001-01-01T00:00:00Z","price":0,"stock":0},"quantity":2}],"total_price":0,"created_at":"2025-01-12T16:36:46.9952477+01:00","status":"pending"}
+
+
+
+
+List all orders (GET /api/orders)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1096  100  1096    0     0   140k      0 --:--:-- --:--:-- --:--:--  152kHTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:47 GMT
+Content-Length: 1096
+
+[{"id":1,"customer":{"id":1,"name":"John Doe (Updated)","email":"john.newemail@example.com","address":{"street":"456 Park Ave","city":"Boston","state":"MA","postal_code":"02109","country":"USA"},"created_at":"2025-01-12T16:27:24.750477Z"},"items":[{"book":{"id":2,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"0001-01-01T00:00:00Z","price":12.09,"stock":46},"quantity":2}],"total_price":0,"created_at":"2025-01-12T16:27:25.087627Z","status":"pending"},{"id":2,"customer":{"id":1,"name":"John Doe (Updated)","email":"john.newemail@example.com","address":{"street":"456 Park Ave","city":"Boston","state":"MA","postal_code":"02109","country":"USA"},"created_at":"2025-01-12T16:27:24.750477Z"},"items":[{"book":{"id":2,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"0001-01-01T00:00:00Z","price":12.09,"stock":46},"quantity":2}],"total_price":0,"created_at":"2025-01-12T16:36:46.995248Z","status":"pending"}]
+
+
+
+
+=============================
+Update order #1 (PUT /api/orders/1)
+(Add more items or adjust quantity, for example.)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   547  100   423  100   124  19657   5762 --:--:-- --:--:-- --:--:-- 26047HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:47 GMT
+Content-Length: 423
+
+{"id":1,"customer":{"id":1,"name":"","email":"","address":{"street":"","city":"","state":"","postal_code":"","country":""},"created_at":"0001-01-01T00:00:00Z"},"items":[{"book":{"id":2,"title":"","author":{"id":0,"first_name":"","last_name":"","bio":""},"genres":null,"published_at":"0001-01-01T00:00:00Z","price":0,"stock":0},"quantity":3}],"total_price":0,"created_at":"2025-01-12T16:27:25.087627Z","status":"completed"}
+
+
+
+
+Get order #1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   549  100   549    0     0  78160      0 --:--:-- --:--:-- --:--:-- 78428HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:47 GMT
+Content-Length: 549
+
+{"id":1,"customer":{"id":1,"name":"John Doe (Updated)","email":"john.newemail@example.com","address":{"street":"456 Park Ave","city":"Boston","state":"MA","postal_code":"02109","country":"USA"},"created_at":"2025-01-12T16:27:24.750477Z"},"items":[{"book":{"id":2,"title":"Emma","author":{"id":1,"first_name":"Jane","last_name":"Austen","bio":"19th century English novelist"},"genres":null,"published_at":"0001-01-01T00:00:00Z","price":12.09,"stock":45},"quantity":3}],"total_price":0,"created_at":"2025-01-12T16:27:25.087627Z","status":"completed"}
+
+
+
+
+=============================
+Delete order #1
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0HTTP/1.1 204 No Content
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:47 GMT
+
+
+
+
+
+=============================
+7) Get sales reports (GET /api/reports/sales)
+(We can specify ?start_date=2025-01-01&end_date=2025-12-31 if you like.)
+=============================
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    15  100    15    0     0   9208      0 --:--:-- --:--:-- --:--:-- 15000HTTP/1.1 200 OK
+Content-Type: application/json
+Vary: Origin
+Date: Sun, 12 Jan 2025 15:36:47 GMT
+Content-Length: 15
+
+{"reports":[]}
+
+
+
+
+===== ALL TESTS COMPLETE =====
+You may now review the above HTTP status codes and JSON responses.
