@@ -1,4 +1,4 @@
-	// internal/models/models.gopackage models
+
 	package models
 	import (
 		"time"
@@ -65,12 +65,17 @@
 
 
 	type SearchCriteria struct {
-		Title  string   `json:"title"`
-		Author string   `json:"author"`
-		Genres []string `json:"genres"`
-		MinPrice float64 `json:"min_price"`
-		MaxPrice float64 `json:"max_price"`
-	}
+	Title           string    `json:"title"`
+	Author          string    `json:"author"`
+	Genres          []string  `json:"genres"`
+	MinPrice        float64   `json:"min_price"`
+	MaxPrice        float64   `json:"max_price"`
+	PublishedBefore *time.Time
+	PublishedAfter  *time.Time
+	MinStock        int
+	MaxStock        int
+}
+
 
 	type ErrorResponse struct {
 		Error string `json:"error"`

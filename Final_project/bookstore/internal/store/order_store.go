@@ -1,211 +1,318 @@
+
 package store
 
 import (
     "context"
-    "encoding/json"
+    "database/sql"
     "fmt"
-    "os"
-    "sync"
     "time"
 
+    "bookstore/internal/interfaces"
     "bookstore/internal/models"
 )
 
-type InMemoryOrderStore struct {
-    mu     sync.RWMutex
-    orders map[int]models.Order
-    nextID int
-    dbPath string
+type PostgresOrderStore struct {
+    db *sql.DB
 }
 
-func NewOrderStore(dbPath string) (*InMemoryOrderStore, error) {
-    store := &InMemoryOrderStore{
-        orders: make(map[int]models.Order),
-        nextID: 1,
-        dbPath: dbPath,
-    }
-    if err := store.loadOrders(); err != nil {
-        return nil, fmt.Errorf("failed to load orders: %v", err)
-    }
-    return store, nil
+func NewPostgresOrderStore(db *sql.DB) (interfaces.OrderStore, error) {
+    return &PostgresOrderStore{db: db}, nil
 }
 
-// loadOrders: no lock needed on startup
-func (s *InMemoryOrderStore) loadOrders() error {
-    data, err := os.ReadFile(s.dbPath)
-    if os.IsNotExist(err) {
-        return nil
-    }
+func (s *PostgresOrderStore) CreateOrder(ctx context.Context, order models.Order) (models.Order, error) {
+    tx, err := s.db.BeginTx(ctx, nil)
     if err != nil {
-        return err
+        return order, err
     }
 
-    var orders []models.Order
-    if err := json.Unmarshal(data, &orders); err != nil {
-        return err
+ 
+    var total float64
+    for _, item := range order.Items {
+        total += item.Book.Price * float64(item.Quantity)
     }
+    now := time.Now()
 
-    for _, o := range orders {
-        s.orders[o.ID] = o
-        if o.ID >= s.nextID {
-            s.nextID = o.ID + 1
+
+    query := `
+        INSERT INTO orders (customer_id, total_price, created_at, status)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+    `
+    err = tx.QueryRowContext(ctx, query,
+        order.Customer.ID,
+        total,
+        now,
+        "pending",
+    ).Scan(&order.ID)
+    if err != nil {
+        tx.Rollback()
+        return order, fmt.Errorf("CreateOrder (orders insert): %w", err)
+    }
+    order.CreatedAt = now
+    order.TotalPrice = total
+    order.Status = "pending"
+
+
+    for _, item := range order.Items {
+        ins := `
+            INSERT INTO order_items (order_id, book_id, quantity)
+            VALUES ($1, $2, $3)
+        `
+        _, err := tx.ExecContext(ctx, ins, order.ID, item.Book.ID, item.Quantity)
+        if err != nil {
+            tx.Rollback()
+            return order, fmt.Errorf("CreateOrder (order_items insert): %w", err)
         }
+    }
+
+    if err := tx.Commit(); err != nil {
+        return order, err
+    }
+    return order, nil
+}
+
+func (s *PostgresOrderStore) GetOrder(ctx context.Context, id int) (models.Order, error) {
+    var order models.Order
+
+
+    query := `
+        SELECT o.id, o.customer_id, o.total_price, o.created_at, o.status,
+               c.id, c.name, c.email, c.street, c.city, c.state, c.postal_code, c.country, c.created_at
+        FROM orders o
+        JOIN customers c ON o.customer_id = c.id
+        WHERE o.id = $1
+    `
+    row := s.db.QueryRowContext(ctx, query, id)
+
+    var cust models.Customer
+    err := row.Scan(
+        &order.ID,
+        &order.Customer.ID,
+        &order.TotalPrice,
+        &order.CreatedAt,
+        &order.Status,
+        &cust.ID,
+        &cust.Name,
+        &cust.Email,
+        &cust.Address.Street,
+        &cust.Address.City,
+        &cust.Address.State,
+        &cust.Address.PostalCode,
+        &cust.Address.Country,
+        &cust.CreatedAt,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return order, fmt.Errorf("order not found with id: %d", id)
+        }
+        return order, err
+    }
+    order.Customer = cust
+
+
+    items, err := s.getOrderItems(ctx, order.ID)
+    if err != nil {
+        return order, err
+    }
+    order.Items = items
+
+    return order, nil
+}
+
+func (s *PostgresOrderStore) UpdateOrder(ctx context.Context, id int, updated models.Order) (models.Order, error) {
+    tx, err := s.db.BeginTx(ctx, nil)
+    if err != nil {
+        return updated, err
+    }
+    defer tx.Rollback()
+
+
+    var total float64
+    for _, item := range updated.Items {
+        total += item.Book.Price * float64(item.Quantity)
+    }
+
+
+    up := `
+        UPDATE orders
+        SET customer_id = $1, total_price = $2, status = $3
+        WHERE id = $4
+    `
+    _, err = tx.ExecContext(ctx, up,
+        updated.Customer.ID,
+        total,
+        updated.Status,
+        id,
+    )
+    if err != nil {
+        return updated, fmt.Errorf("UpdateOrder (orders update): %w", err)
+    }
+
+    existing, err := s.GetOrder(ctx, id)
+    if err != nil {
+        return updated, fmt.Errorf("UpdateOrder: cannot fetch existing order: %w", err)
+    }
+
+
+    del := `DELETE FROM order_items WHERE order_id = $1`
+    _, err = tx.ExecContext(ctx, del, id)
+    if err != nil {
+        return updated, fmt.Errorf("UpdateOrder (delete items): %w", err)
+    }
+
+
+    for _, item := range updated.Items {
+        ins := `
+            INSERT INTO order_items (order_id, book_id, quantity)
+            VALUES ($1, $2, $3)
+        `
+        _, err := tx.ExecContext(ctx, ins, id, item.Book.ID, item.Quantity)
+        if err != nil {
+            return updated, fmt.Errorf("UpdateOrder (insert items): %w", err)
+        }
+    }
+
+    if err := tx.Commit(); err != nil {
+        return updated, err
+    }
+
+    updated.ID = id
+    updated.CreatedAt = existing.CreatedAt
+    updated.TotalPrice = total
+    return updated, nil
+}
+
+func (s *PostgresOrderStore) DeleteOrder(ctx context.Context, id int) error {
+    query := `DELETE FROM orders WHERE id = $1`
+    _, err := s.db.ExecContext(ctx, query, id)
+    if err != nil {
+        return fmt.Errorf("DeleteOrder error: %w", err)
     }
     return nil
 }
 
-// CreateOrder: lock, add to map, then save
-func (s *InMemoryOrderStore) CreateOrder(ctx context.Context, order models.Order) (models.Order, error) {
-    select {
-    case <-ctx.Done():
-        return models.Order{}, ctx.Err()
-    default:
-        s.mu.Lock()
-        defer s.mu.Unlock()
-
-        // Calculate total price
-        var total float64
-        for _, item := range order.Items {
-            total += item.Book.Price * float64(item.Quantity)
-        }
-        order.TotalPrice = total
-        order.ID = s.nextID
-        order.CreatedAt = time.Now()
-        order.Status = "pending"
-        s.nextID++
-
-        s.orders[order.ID] = order
-        if err := s.saveOrdersUnlocked(); err != nil {
-            // revert
-            delete(s.orders, order.ID)
-            s.nextID--
-            return models.Order{}, err
-        }
-        return order, nil
+func (s *PostgresOrderStore) ListOrders(ctx context.Context) ([]models.Order, error) {
+    query := `
+        SELECT o.id, o.customer_id, o.total_price, o.created_at, o.status,
+               c.id, c.name, c.email, c.street, c.city, c.state, c.postal_code, c.country, c.created_at
+        FROM orders o
+        JOIN customers c ON o.customer_id = c.id
+        ORDER BY o.id
+    `
+    rows, err := s.db.QueryContext(ctx, query)
+    if err != nil {
+        return nil, fmt.Errorf("ListOrders error: %w", err)
     }
+    defer rows.Close()
+
+    var results []models.Order
+    for rows.Next() {
+        var order models.Order
+        var cust models.Customer
+        if err := rows.Scan(
+            &order.ID,
+            &order.Customer.ID,
+            &order.TotalPrice,
+            &order.CreatedAt,
+            &order.Status,
+            &cust.ID,
+            &cust.Name,
+            &cust.Email,
+            &cust.Address.Street,
+            &cust.Address.City,
+            &cust.Address.State,
+            &cust.Address.PostalCode,
+            &cust.Address.Country,
+            &cust.CreatedAt,
+        ); err != nil {
+            return nil, err
+        }
+        order.Customer = cust
+
+
+        items, err := s.getOrderItems(ctx, order.ID)
+        if err != nil {
+            return nil, err
+        }
+        order.Items = items
+
+        results = append(results, order)
+    }
+    if err = rows.Err(); err != nil {
+        return nil, err
+    }
+    return results, nil
 }
 
-// UpdateOrder: lock, update map, then save
-func (s *InMemoryOrderStore) UpdateOrder(ctx context.Context, id int, order models.Order) (models.Order, error) {
-    select {
-    case <-ctx.Done():
-        return models.Order{}, ctx.Err()
-    default:
-        s.mu.Lock()
-        defer s.mu.Unlock()
-
-        existing, exists := s.orders[id]
-        if !exists {
-            return models.Order{}, fmt.Errorf("order not found with id: %d", id)
-        }
-
-        // preserve ID, CreatedAt
-        order.ID = id
-        order.CreatedAt = existing.CreatedAt
-
-        // recalc total
-        var total float64
-        for _, item := range order.Items {
-            total += item.Book.Price * float64(item.Quantity)
-        }
-        order.TotalPrice = total
-
-        s.orders[id] = order
-        if err := s.saveOrdersUnlocked(); err != nil {
-            return models.Order{}, err
-        }
-        return order, nil
+func (s *PostgresOrderStore) GetOrdersInTimeRange(ctx context.Context, start, end time.Time) ([]models.Order, error) {
+    query := `
+        SELECT id
+        FROM orders
+        WHERE created_at BETWEEN $1 AND $2
+        ORDER BY id
+    `
+    rows, err := s.db.QueryContext(ctx, query, start, end)
+    if err != nil {
+        return nil, fmt.Errorf("GetOrdersInTimeRange error: %w", err)
     }
-}
+    defer rows.Close()
 
-// DeleteOrder: lock, remove from map, then save
-func (s *InMemoryOrderStore) DeleteOrder(ctx context.Context, id int) error {
-    select {
-    case <-ctx.Done():
-        return ctx.Err()
-    default:
-        s.mu.Lock()
-        defer s.mu.Unlock()
-
-        if _, exists := s.orders[id]; !exists {
-            return fmt.Errorf("order not found with id: %d", id)
-        }
-        delete(s.orders, id)
-
-        if err := s.saveOrdersUnlocked(); err != nil {
-            return err
-        }
-        return nil
-    }
-}
-
-// saveOrdersUnlocked: no second lock
-func (s *InMemoryOrderStore) saveOrdersUnlocked() error {
     var orders []models.Order
-    for _, o := range s.orders {
+    for rows.Next() {
+        var oid int
+        if err := rows.Scan(&oid); err != nil {
+            return nil, err
+        }
+        o, err := s.GetOrder(ctx, oid)
+        if err != nil {
+            return nil, err
+        }
         orders = append(orders, o)
     }
+    return orders, rows.Err()
+}
 
-    data, err := json.MarshalIndent(orders, "", "  ")
+
+func (s *PostgresOrderStore) getOrderItems(ctx context.Context, orderID int) ([]models.OrderItem, error) {
+    query := `
+        SELECT oi.book_id, oi.quantity,
+               b.title, b.price, b.stock,
+               a.id, a.first_name, a.last_name, a.bio
+        FROM order_items oi
+        JOIN books b ON oi.book_id = b.id
+        JOIN authors a ON b.author_id = a.id
+        WHERE oi.order_id = $1
+    `
+    rows, err := s.db.QueryContext(ctx, query, orderID)
     if err != nil {
-        return fmt.Errorf("failed to marshal orders: %v", err)
+        return nil, err
     }
+    defer rows.Close()
 
-    if err := os.WriteFile(s.dbPath, data, 0644); err != nil {
-        return fmt.Errorf("failed to write orders file: %v", err)
-    }
-    return nil
-}
-
-// GET-like methods with RLock
-func (s *InMemoryOrderStore) GetOrder(ctx context.Context, id int) (models.Order, error) {
-    select {
-    case <-ctx.Done():
-        return models.Order{}, ctx.Err()
-    default:
-        s.mu.RLock()
-        defer s.mu.RUnlock()
-
-        o, exists := s.orders[id]
-        if !exists {
-            return models.Order{}, fmt.Errorf("order not found with id: %d", id)
+    var items []models.OrderItem
+    for rows.Next() {
+        var (
+            item   models.OrderItem
+            book   models.Book
+            author models.Author
+        )
+        err := rows.Scan(
+            &book.ID,
+            &item.Quantity,
+            &book.Title,
+            &book.Price,
+            &book.Stock,
+            &author.ID,
+            &author.FirstName,
+            &author.LastName,
+            &author.Bio,
+        )
+        if err != nil {
+            return nil, err
         }
-        return o, nil
+        book.Author = author
+        item.Book = book
+        items = append(items, item)
     }
-}
-
-func (s *InMemoryOrderStore) ListOrders(ctx context.Context) ([]models.Order, error) {
-    select {
-    case <-ctx.Done():
-        return nil, ctx.Err()
-    default:
-        s.mu.RLock()
-        defer s.mu.RUnlock()
-
-        var list []models.Order
-        for _, o := range s.orders {
-            list = append(list, o)
-        }
-        return list, nil
-    }
-}
-
-// Additional method to filter by time range
-func (s *InMemoryOrderStore) GetOrdersInTimeRange(ctx context.Context, start, end time.Time) ([]models.Order, error) {
-    select {
-    case <-ctx.Done():
-        return nil, ctx.Err()
-    default:
-        s.mu.RLock()
-        defer s.mu.RUnlock()
-
-        var orders []models.Order
-        for _, o := range s.orders {
-            if (o.CreatedAt.Equal(start) || o.CreatedAt.After(start)) &&
-               (o.CreatedAt.Equal(end) || o.CreatedAt.Before(end)) {
-                orders = append(orders, o)
-            }
-        }
-        return orders, nil
-    }
+    return items, rows.Err()
 }

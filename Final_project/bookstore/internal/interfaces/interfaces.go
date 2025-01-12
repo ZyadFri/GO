@@ -1,4 +1,4 @@
-// internal/store/interfaces.go
+
 
 package interfaces
 

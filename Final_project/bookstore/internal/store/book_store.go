@@ -1,229 +1,238 @@
+
 package store
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
 	"fmt"
-	"os"
 	"strings"
-	"sync"
 
+	"bookstore/internal/interfaces"
 	"bookstore/internal/models"
 )
 
-type InMemoryBookStore struct {
-	mu     sync.RWMutex
-	books  map[int]models.Book
-	nextID int
-	dbPath string
+type PostgresBookStore struct {
+	db *sql.DB
 }
 
-func NewBookStore(dbPath string) (*InMemoryBookStore, error) {
-	store := &InMemoryBookStore{
-		books:  make(map[int]models.Book),
-		nextID: 1,
-		dbPath: dbPath,
-	}
-	if err := store.loadBooks(); err != nil {
-		return nil, fmt.Errorf("failed to load books: %v", err)
-	}
-	return store, nil
+func NewPostgresBookStore(db *sql.DB) (interfaces.BookStore, error) {
+	return &PostgresBookStore{db: db}, nil
 }
 
-// loadBooks: no lock needed at startup
-func (s *InMemoryBookStore) loadBooks() error {
-	data, err := os.ReadFile(s.dbPath)
-	if os.IsNotExist(err) {
-		return nil
-	}
+
+func (s *PostgresBookStore) CreateBook(ctx context.Context, book models.Book) (models.Book, error) {
+	query := `
+        INSERT INTO books (title, author_id, published_at, price, stock)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+    `
+	err := s.db.QueryRowContext(ctx, query,
+		book.Title,
+		book.Author.ID,
+		book.PublishedAt,
+		book.Price,
+		book.Stock,
+	).Scan(&book.ID)
 	if err != nil {
-		return err
+		return book, fmt.Errorf("CreateBook error: %w", err)
 	}
+	return book, nil
+}
 
-	var books []models.Book
-	if err := json.Unmarshal(data, &books); err != nil {
-		return err
-	}
 
-	for _, book := range books {
-		s.books[book.ID] = book
-		if book.ID >= s.nextID {
-			s.nextID = book.ID + 1
+func (s *PostgresBookStore) GetBook(ctx context.Context, id int) (models.Book, error) {
+	var book models.Book
+	var author models.Author
+
+	query := `
+        SELECT b.id, b.title, b.published_at, b.price, b.stock,
+               a.id, a.first_name, a.last_name, a.bio
+        FROM books b
+        JOIN authors a ON b.author_id = a.id
+        WHERE b.id = $1
+    `
+	err := s.db.QueryRowContext(ctx, query, id).Scan(
+		&book.ID,
+		&book.Title,
+		&book.PublishedAt,
+		&book.Price,
+		&book.Stock,
+		&author.ID,
+		&author.FirstName,
+		&author.LastName,
+		&author.Bio,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return book, fmt.Errorf("book not found with id: %d", id)
 		}
+		return book, err
+	}
+	book.Author = author
+	return book, nil
+}
+
+
+func (s *PostgresBookStore) UpdateBook(ctx context.Context, id int, book models.Book) (models.Book, error) {
+	query := `
+        UPDATE books
+        SET title = $1,
+            author_id = $2,
+            published_at = $3,
+            price = $4,
+            stock = $5
+        WHERE id = $6
+    `
+	_, err := s.db.ExecContext(ctx, query,
+		book.Title,
+		book.Author.ID,
+		book.PublishedAt,
+		book.Price,
+		book.Stock,
+		id,
+	)
+	if err != nil {
+		return book, fmt.Errorf("UpdateBook error: %w", err)
+	}
+	book.ID = id
+	return book, nil
+}
+
+
+func (s *PostgresBookStore) DeleteBook(ctx context.Context, id int) error {
+	query := `DELETE FROM books WHERE id = $1`
+	_, err := s.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("DeleteBook error: %w", err)
 	}
 	return nil
 }
 
-// CreateBook: lock once, write to map, then save
-func (s *InMemoryBookStore) CreateBook(ctx context.Context, book models.Book) (models.Book, error) {
-	select {
-	case <-ctx.Done():
-		return models.Book{}, ctx.Err()
-	default:
-		s.mu.Lock()
-		defer s.mu.Unlock()
 
-		book.ID = s.nextID
-		s.nextID++
-		s.books[book.ID] = book
-
-		if err := s.saveBooksUnlocked(); err != nil {
-			// revert
-			delete(s.books, book.ID)
-			s.nextID--
-			return models.Book{}, err
-		}
-		return book, nil
-	}
-}
-
-// UpdateBook: lock, update map, then save
-func (s *InMemoryBookStore) UpdateBook(ctx context.Context, id int, book models.Book) (models.Book, error) {
-	select {
-	case <-ctx.Done():
-		return models.Book{}, ctx.Err()
-	default:
-		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		if _, exists := s.books[id]; !exists {
-			return models.Book{}, fmt.Errorf("book not found with id: %d", id)
-		}
-
-		book.ID = id
-		s.books[id] = book
-
-		if err := s.saveBooksUnlocked(); err != nil {
-			return models.Book{}, err
-		}
-		return book, nil
-	}
-}
-
-// DeleteBook: lock, remove from map, then save
-func (s *InMemoryBookStore) DeleteBook(ctx context.Context, id int) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		if _, exists := s.books[id]; !exists {
-			return fmt.Errorf("book not found with id: %d", id)
-		}
-		delete(s.books, id)
-
-		if err := s.saveBooksUnlocked(); err != nil {
-			return err
-		}
-		return nil
-	}
-}
-
-// saveBooksUnlocked: do not lock again; assume caller holds s.mu.Lock()
-func (s *InMemoryBookStore) saveBooksUnlocked() error {
-	var books []models.Book
-	for _, b := range s.books {
-		books = append(books, b)
-	}
-
-	data, err := json.MarshalIndent(books, "", "  ")
+func (s *PostgresBookStore) ListBooks(ctx context.Context) ([]models.Book, error) {
+	query := `
+        SELECT b.id, b.title, b.published_at, b.price, b.stock,
+               a.id, a.first_name, a.last_name, a.bio
+        FROM books b
+        JOIN authors a ON b.author_id = a.id
+        ORDER BY b.id
+    `
+	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
-		return fmt.Errorf("failed to marshal books: %v", err)
+		return nil, fmt.Errorf("ListBooks error: %w", err)
 	}
+	defer rows.Close()
 
-	if err := os.WriteFile(s.dbPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write books file: %v", err)
+	var result []models.Book
+	for rows.Next() {
+		var book models.Book
+		var author models.Author
+		err := rows.Scan(
+			&book.ID,
+			&book.Title,
+			&book.PublishedAt,
+			&book.Price,
+			&book.Stock,
+			&author.ID,
+			&author.FirstName,
+			&author.LastName,
+			&author.Bio,
+		)
+		if err != nil {
+			return nil, err
+		}
+		book.Author = author
+		result = append(result, book)
 	}
-	return nil
+	return result, rows.Err()
 }
 
-// GET-like methods use RLock
-func (s *InMemoryBookStore) GetBook(ctx context.Context, id int) (models.Book, error) {
-	select {
-	case <-ctx.Done():
-		return models.Book{}, ctx.Err()
-	default:
-		s.mu.RLock()
-		defer s.mu.RUnlock()
 
-		book, exists := s.books[id]
-		if !exists {
-			return models.Book{}, fmt.Errorf("book not found with id: %d", id)
-		}
-		return book, nil
-	}
-}
+func (s *PostgresBookStore) SearchBooks(ctx context.Context, criteria models.SearchCriteria) ([]models.Book, error) {
+	var (
+		clauses []string
+		args    []interface{}
+	)
+	i := 1
 
-func (s *InMemoryBookStore) ListBooks(ctx context.Context) ([]models.Book, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		s.mu.RLock()
-		defer s.mu.RUnlock()
+	if criteria.Title != "" {
+		clauses = append(clauses, fmt.Sprintf("LOWER(b.title) LIKE LOWER($%d)", i))
+		args = append(args, "%"+criteria.Title+"%")
+		i++
+	}
+	if criteria.Author != "" {
+		clauses = append(clauses, fmt.Sprintf("(LOWER(a.first_name) LIKE LOWER($%d) OR LOWER(a.last_name) LIKE LOWER($%d))", i, i+1))
+		args = append(args, "%"+criteria.Author+"%", "%"+criteria.Author+"%")
+		i += 2
+	}
+	if criteria.MinPrice > 0 {
+		clauses = append(clauses, fmt.Sprintf("b.price >= $%d", i))
+		args = append(args, criteria.MinPrice)
+		i++
+	}
+	if criteria.MaxPrice > 0 {
+		clauses = append(clauses, fmt.Sprintf("b.price <= $%d", i))
+		args = append(args, criteria.MaxPrice)
+		i++
+	}
+	if criteria.PublishedBefore != nil {
+		clauses = append(clauses, fmt.Sprintf("b.published_at < $%d", i))
+		args = append(args, *criteria.PublishedBefore)
+		i++
+	}
+	if criteria.PublishedAfter != nil {
+		clauses = append(clauses, fmt.Sprintf("b.published_at > $%d", i))
+		args = append(args, *criteria.PublishedAfter)
+		i++
+	}
+	if criteria.MinStock > 0 {
+		clauses = append(clauses, fmt.Sprintf("b.stock >= $%d", i))
+		args = append(args, criteria.MinStock)
+		i++
+	}
+	if criteria.MaxStock > 0 {
+		clauses = append(clauses, fmt.Sprintf("b.stock <= $%d", i))
+		args = append(args, criteria.MaxStock)
+		i++
+	}
 
-		books := make([]models.Book, 0, len(s.books))
-		for _, b := range s.books {
-			books = append(books, b)
-		}
-		return books, nil
+	query := `
+        SELECT b.id, b.title, b.published_at, b.price, b.stock,
+               a.id, a.first_name, a.last_name, a.bio
+        FROM books b
+        JOIN authors a ON b.author_id = a.id
+    `
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " AND ")
 	}
-}
+	query += " ORDER BY b.id"
 
-func (s *InMemoryBookStore) SearchBooks(ctx context.Context, criteria models.SearchCriteria) ([]models.Book, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		s.mu.RLock()
-		defer s.mu.RUnlock()
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("SearchBooks error: %w", err)
+	}
+	defer rows.Close()
 
-		var results []models.Book
-		for _, b := range s.books {
-			if matchesCriteria(b, criteria) {
-				results = append(results, b)
-			}
+	var result []models.Book
+	for rows.Next() {
+		var book models.Book
+		var author models.Author
+		err := rows.Scan(
+			&book.ID,
+			&book.Title,
+			&book.PublishedAt,
+			&book.Price,
+			&book.Stock,
+			&author.ID,
+			&author.FirstName,
+			&author.LastName,
+			&author.Bio,
+		)
+		if err != nil {
+			return nil, err
 		}
-		return results, nil
+		book.Author = author
+		result = append(result, book)
 	}
-}
-
-// The old saveBooks() method is replaced by saveBooksUnlocked() to avoid re-locking
-// The matchesCriteria function is unchanged
-func matchesCriteria(book models.Book, c models.SearchCriteria) bool {
-	if c.Title != "" && !strings.Contains(strings.ToLower(book.Title), strings.ToLower(c.Title)) {
-		return false
-	}
-	if c.Author != "" {
-		fullName := book.Author.FirstName + " " + book.Author.LastName
-		if !strings.Contains(strings.ToLower(fullName), strings.ToLower(c.Author)) {
-			return false
-		}
-	}
-	if len(c.Genres) > 0 {
-		matched := false
-		for _, wantGenre := range c.Genres {
-			for _, haveGenre := range book.Genres {
-				if strings.EqualFold(wantGenre, haveGenre) {
-					matched = true
-					break
-				}
-			}
-			if matched {
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-	if c.MinPrice > 0 && book.Price < c.MinPrice {
-		return false
-	}
-	if c.MaxPrice > 0 && book.Price > c.MaxPrice {
-		return false
-	}
-	return true
+	return result, rows.Err()
 }

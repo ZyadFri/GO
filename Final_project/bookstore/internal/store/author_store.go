@@ -1,199 +1,105 @@
+
 package store
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"os"
-	"sync"
+    "context"
+    "database/sql"
+    "fmt"
 
-	"bookstore/internal/models"
+    "bookstore/internal/interfaces"
+    "bookstore/internal/models"
 )
 
-type InMemoryAuthorStore struct {
-	mu      sync.RWMutex
-	authors map[int]models.Author
-	nextID  int
-	dbPath  string
+type PostgresAuthorStore struct {
+    db *sql.DB
 }
 
-// Constructor
-func NewAuthorStore(dbPath string) (*InMemoryAuthorStore, error) {
-	store := &InMemoryAuthorStore{
-		authors: make(map[int]models.Author),
-		nextID:  1,
-		dbPath:  dbPath,
-	}
-
-	if err := store.loadAuthors(); err != nil {
-		return nil, fmt.Errorf("failed to load authors: %v", err)
-	}
-
-	return store, nil
+func NewPostgresAuthorStore(db *sql.DB) (interfaces.AuthorStore, error) {
+    return &PostgresAuthorStore{db: db}, nil
 }
 
-// Load authors from file (no locking needed on startup)
-func (s *InMemoryAuthorStore) loadAuthors() error {
-	// If file doesn't exist, start empty
-	data, err := os.ReadFile(s.dbPath)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-
-	var authors []models.Author
-	if err := json.Unmarshal(data, &authors); err != nil {
-		return err
-	}
-
-	for _, author := range authors {
-		s.authors[author.ID] = author
-		if author.ID >= s.nextID {
-			s.nextID = author.ID + 1
-		}
-	}
-	return nil
+func (s *PostgresAuthorStore) CreateAuthor(ctx context.Context, author models.Author) (models.Author, error) {
+    query := `
+        INSERT INTO authors (first_name, last_name, bio)
+        VALUES ($1, $2, $3)
+        RETURNING id
+    `
+    err := s.db.QueryRowContext(ctx, query,
+        author.FirstName,
+        author.LastName,
+        author.Bio,
+    ).Scan(&author.ID)
+    if err != nil {
+        return author, fmt.Errorf("CreateAuthor error: %w", err)
+    }
+    return author, nil
 }
 
-// Create a new author (write lock)
-func (s *InMemoryAuthorStore) CreateAuthor(ctx context.Context, author models.Author) (models.Author, error) {
-	log.Println("CreateAuthor: start")
-
-	s.mu.Lock()
-	log.Println("CreateAuthor: lock acquired")
-	defer s.mu.Unlock()
-
-	// Validate
-	if author.FirstName == "" || author.LastName == "" {
-		log.Println("CreateAuthor: missing name fields")
-		return models.Author{}, fmt.Errorf("first name and last name are required")
-	}
-
-	// Assign new ID
-	author.ID = s.nextID
-	s.nextID++
-	s.authors[author.ID] = author
-	log.Printf("CreateAuthor: assigned ID = %d, calling saveAuthors\n", author.ID)
-
-	// Save to file (no additional locking here)
-	if err := s.saveAuthorsUnlocked(); err != nil {
-		log.Println("CreateAuthor: saveAuthors error:", err)
-		// revert
-		delete(s.authors, author.ID)
-		s.nextID--
-		return models.Author{}, err
-	}
-
-	log.Println("CreateAuthor: saveAuthors returned successfully, done.")
-	return author, nil
+func (s *PostgresAuthorStore) GetAuthor(ctx context.Context, id int) (models.Author, error) {
+    var author models.Author
+    query := `
+        SELECT id, first_name, last_name, bio
+        FROM authors
+        WHERE id = $1
+    `
+    err := s.db.QueryRowContext(ctx, query, id).Scan(
+        &author.ID,
+        &author.FirstName,
+        &author.LastName,
+        &author.Bio,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return author, fmt.Errorf("author not found with id: %d", id)
+        }
+        return author, err
+    }
+    return author, nil
 }
 
-// saveAuthorsUnlocked: Called only while we already hold s.mu.Lock()
-func (s *InMemoryAuthorStore) saveAuthorsUnlocked() error {
-	log.Println("saveAuthors: start (unlocked)")
-
-	// We assume we already hold a write lock at this point.
-	authors := make([]models.Author, 0, len(s.authors))
-	for _, author := range s.authors {
-		authors = append(authors, author)
-	}
-	log.Printf("saveAuthors: about to marshal %d authors\n", len(authors))
-
-	data, err := json.MarshalIndent(authors, "", "  ")
-	if err != nil {
-		log.Println("saveAuthors: marshal error:", err)
-		return fmt.Errorf("failed to marshal authors: %v", err)
-	}
-
-	log.Println("saveAuthors: about to write file", s.dbPath)
-	err = os.WriteFile(s.dbPath, data, 0644)
-	if err != nil {
-		log.Println("saveAuthors: write file error:", err)
-		return fmt.Errorf("failed to write authors file: %v", err)
-	}
-
-	log.Println("saveAuthors: file write done. Returning success.")
-	return nil
+func (s *PostgresAuthorStore) UpdateAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
+    query := `
+        UPDATE authors
+        SET first_name = $1, last_name = $2, bio = $3
+        WHERE id = $4
+    `
+    _, err := s.db.ExecContext(ctx, query,
+        author.FirstName,
+        author.LastName,
+        author.Bio,
+        id,
+    )
+    if err != nil {
+        return author, fmt.Errorf("UpdateAuthor error: %w", err)
+    }
+    author.ID = id
+    return author, nil
 }
 
-// Get a single author (read lock)
-func (s *InMemoryAuthorStore) GetAuthor(ctx context.Context, id int) (models.Author, error) {
-	select {
-	case <-ctx.Done():
-		return models.Author{}, ctx.Err()
-	default:
-		s.mu.RLock()
-		defer s.mu.RUnlock()
-
-		author, exists := s.authors[id]
-		if !exists {
-			return models.Author{}, fmt.Errorf("author not found with id: %d", id)
-		}
-		return author, nil
-	}
+func (s *PostgresAuthorStore) DeleteAuthor(ctx context.Context, id int) error {
+    query := `DELETE FROM authors WHERE id = $1`
+    _, err := s.db.ExecContext(ctx, query, id)
+    if err != nil {
+        return fmt.Errorf("DeleteAuthor error: %w", err)
+    }
+    return nil
 }
 
-// Update an author (write lock)
-func (s *InMemoryAuthorStore) UpdateAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
-	select {
-	case <-ctx.Done():
-		return models.Author{}, ctx.Err()
-	default:
-		s.mu.Lock()
-		defer s.mu.Unlock()
+func (s *PostgresAuthorStore) ListAuthors(ctx context.Context) ([]models.Author, error) {
+    query := `SELECT id, first_name, last_name, bio FROM authors ORDER BY id`
+    rows, err := s.db.QueryContext(ctx, query)
+    if err != nil {
+        return nil, fmt.Errorf("ListAuthors error: %w", err)
+    }
+    defer rows.Close()
 
-		if _, exists := s.authors[id]; !exists {
-			return models.Author{}, fmt.Errorf("author not found with id: %d", id)
-		}
-
-		author.ID = id
-		s.authors[id] = author
-
-		if err := s.saveAuthorsUnlocked(); err != nil {
-			return models.Author{}, err
-		}
-		return author, nil
-	}
-}
-
-// Delete an author (write lock)
-func (s *InMemoryAuthorStore) DeleteAuthor(ctx context.Context, id int) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		if _, exists := s.authors[id]; !exists {
-			return fmt.Errorf("author not found with id: %d", id)
-		}
-
-		delete(s.authors, id)
-
-		if err := s.saveAuthorsUnlocked(); err != nil {
-			return err
-		}
-		return nil
-	}
-}
-
-// List all authors (read lock)
-func (s *InMemoryAuthorStore) ListAuthors(ctx context.Context) ([]models.Author, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		s.mu.RLock()
-		defer s.mu.RUnlock()
-
-		authors := make([]models.Author, 0, len(s.authors))
-		for _, a := range s.authors {
-			authors = append(authors, a)
-		}
-		return authors, nil
-	}
+    var authors []models.Author
+    for rows.Next() {
+        var a models.Author
+        if err := rows.Scan(&a.ID, &a.FirstName, &a.LastName, &a.Bio); err != nil {
+            return nil, err
+        }
+        authors = append(authors, a)
+    }
+    return authors, rows.Err()
 }

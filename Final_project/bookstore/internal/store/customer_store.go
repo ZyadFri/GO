@@ -1,177 +1,144 @@
+
 package store
 
 import (
-    "context"
-    "encoding/json"
-    "fmt"
-    "os"
-    "sync"
-    "time"
+	"context"
+	"database/sql"
+	"fmt"
+	"time"
 
-    "bookstore/internal/models"
+	"bookstore/internal/interfaces"
+	"bookstore/internal/models"
 )
 
-type InMemoryCustomerStore struct {
-    mu        sync.RWMutex
-    customers map[int]models.Customer
-    nextID    int
-    dbPath    string
+type PostgresCustomerStore struct {
+	db *sql.DB
 }
 
-func NewCustomerStore(dbPath string) (*InMemoryCustomerStore, error) {
-    store := &InMemoryCustomerStore{
-        customers: make(map[int]models.Customer),
-        nextID:    1,
-        dbPath:    dbPath,
-    }
-    if err := store.loadCustomers(); err != nil {
-        return nil, fmt.Errorf("failed to load customers: %v", err)
-    }
-    return store, nil
+func NewPostgresCustomerStore(db *sql.DB) (interfaces.CustomerStore, error) {
+	return &PostgresCustomerStore{db: db}, nil
 }
 
-// loadCustomers: no lock needed at startup
-func (s *InMemoryCustomerStore) loadCustomers() error {
-    data, err := os.ReadFile(s.dbPath)
-    if os.IsNotExist(err) {
-        return nil
-    }
-    if err != nil {
-        return err
-    }
-
-    var customers []models.Customer
-    if err := json.Unmarshal(data, &customers); err != nil {
-        return err
-    }
-
-    for _, c := range customers {
-        s.customers[c.ID] = c
-        if c.ID >= s.nextID {
-            s.nextID = c.ID + 1
-        }
-    }
-    return nil
+func (s *PostgresCustomerStore) CreateCustomer(ctx context.Context, customer models.Customer) (models.Customer, error) {
+	query := `
+        INSERT INTO customers (name, email, street, city, state, postal_code, country, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id
+    `
+	now := time.Now()
+	err := s.db.QueryRowContext(ctx, query,
+		customer.Name,
+		customer.Email,
+		customer.Address.Street,
+		customer.Address.City,
+		customer.Address.State,
+		customer.Address.PostalCode,
+		customer.Address.Country,
+		now,
+	).Scan(&customer.ID)
+	if err != nil {
+		return customer, fmt.Errorf("CreateCustomer error: %w", err)
+	}
+	customer.CreatedAt = now
+	return customer, nil
 }
 
-// CreateCustomer: lock, add to map, then save
-func (s *InMemoryCustomerStore) CreateCustomer(ctx context.Context, customer models.Customer) (models.Customer, error) {
-    select {
-    case <-ctx.Done():
-        return models.Customer{}, ctx.Err()
-    default:
-        s.mu.Lock()
-        defer s.mu.Unlock()
-
-        customer.ID = s.nextID
-        customer.CreatedAt = time.Now()
-        s.nextID++
-        s.customers[customer.ID] = customer
-
-        if err := s.saveCustomersUnlocked(); err != nil {
-            // revert
-            delete(s.customers, customer.ID)
-            s.nextID--
-            return models.Customer{}, err
-        }
-        return customer, nil
-    }
+func (s *PostgresCustomerStore) GetCustomer(ctx context.Context, id int) (models.Customer, error) {
+	var c models.Customer
+	query := `
+        SELECT id, name, email, street, city, state, postal_code, country, created_at
+        FROM customers
+        WHERE id = $1
+    `
+	err := s.db.QueryRowContext(ctx, query, id).Scan(
+		&c.ID,
+		&c.Name,
+		&c.Email,
+		&c.Address.Street,
+		&c.Address.City,
+		&c.Address.State,
+		&c.Address.PostalCode,
+		&c.Address.Country,
+		&c.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c, fmt.Errorf("customer not found with id: %d", id)
+		}
+		return c, err
+	}
+	return c, nil
 }
 
-// UpdateCustomer: lock, update map, then save
-func (s *InMemoryCustomerStore) UpdateCustomer(ctx context.Context, id int, customer models.Customer) (models.Customer, error) {
-    select {
-    case <-ctx.Done():
-        return models.Customer{}, ctx.Err()
-    default:
-        s.mu.Lock()
-        defer s.mu.Unlock()
+func (s *PostgresCustomerStore) UpdateCustomer(ctx context.Context, id int, customer models.Customer) (models.Customer, error) {
+	
+	existing, err := s.GetCustomer(ctx, id)
+	if err != nil {
+		return customer, err
+	}
 
-        existing, exists := s.customers[id]
-        if !exists {
-            return models.Customer{}, fmt.Errorf("customer not found with id: %d", id)
-        }
-
-        // Keep the same CreatedAt
-        customer.ID = id
-        customer.CreatedAt = existing.CreatedAt
-        s.customers[id] = customer
-
-        if err := s.saveCustomersUnlocked(); err != nil {
-            return models.Customer{}, err
-        }
-        return customer, nil
-    }
+	query := `
+        UPDATE customers
+        SET name = $1, email = $2, street = $3, city = $4,
+            state = $5, postal_code = $6, country = $7
+        WHERE id = $8
+    `
+	_, err = s.db.ExecContext(ctx, query,
+		customer.Name,
+		customer.Email,
+		customer.Address.Street,
+		customer.Address.City,
+		customer.Address.State,
+		customer.Address.PostalCode,
+		customer.Address.Country,
+		id,
+	)
+	if err != nil {
+		return customer, fmt.Errorf("UpdateCustomer error: %w", err)
+	}
+	customer.ID = id
+	customer.CreatedAt = existing.CreatedAt
+	return customer, nil
 }
 
-// DeleteCustomer: lock, remove from map, then save
-func (s *InMemoryCustomerStore) DeleteCustomer(ctx context.Context, id int) error {
-    select {
-    case <-ctx.Done():
-        return ctx.Err()
-    default:
-        s.mu.Lock()
-        defer s.mu.Unlock()
-
-        if _, exists := s.customers[id]; !exists {
-            return fmt.Errorf("customer not found with id: %d", id)
-        }
-        delete(s.customers, id)
-
-        if err := s.saveCustomersUnlocked(); err != nil {
-            return err
-        }
-        return nil
-    }
+func (s *PostgresCustomerStore) DeleteCustomer(ctx context.Context, id int) error {
+	query := `DELETE FROM customers WHERE id = $1`
+	_, err := s.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("DeleteCustomer error: %w", err)
+	}
+	return nil
 }
 
-// saveCustomersUnlocked: no additional lock
-func (s *InMemoryCustomerStore) saveCustomersUnlocked() error {
-    var customers []models.Customer
-    for _, c := range s.customers {
-        customers = append(customers, c)
-    }
+func (s *PostgresCustomerStore) ListCustomers(ctx context.Context) ([]models.Customer, error) {
+	query := `
+        SELECT id, name, email, street, city, state, postal_code, country, created_at
+        FROM customers
+        ORDER BY id
+    `
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("ListCustomers error: %w", err)
+	}
+	defer rows.Close()
 
-    data, err := json.MarshalIndent(customers, "", "  ")
-    if err != nil {
-        return fmt.Errorf("failed to marshal customers: %v", err)
-    }
-
-    if err := os.WriteFile(s.dbPath, data, 0644); err != nil {
-        return fmt.Errorf("failed to write customers file: %v", err)
-    }
-    return nil
-}
-
-// GET-like methods use RLock
-func (s *InMemoryCustomerStore) GetCustomer(ctx context.Context, id int) (models.Customer, error) {
-    select {
-    case <-ctx.Done():
-        return models.Customer{}, ctx.Err()
-    default:
-        s.mu.RLock()
-        defer s.mu.RUnlock()
-
-        c, exists := s.customers[id]
-        if !exists {
-            return models.Customer{}, fmt.Errorf("customer not found with id: %d", id)
-        }
-        return c, nil
-    }
-}
-
-func (s *InMemoryCustomerStore) ListCustomers(ctx context.Context) ([]models.Customer, error) {
-    select {
-    case <-ctx.Done():
-        return nil, ctx.Err()
-    default:
-        s.mu.RLock()
-        defer s.mu.RUnlock()
-
-        var list []models.Customer
-        for _, c := range s.customers {
-            list = append(list, c)
-        }
-        return list, nil
-    }
+	var results []models.Customer
+	for rows.Next() {
+		var c models.Customer
+		if err := rows.Scan(
+			&c.ID,
+			&c.Name,
+			&c.Email,
+			&c.Address.Street,
+			&c.Address.City,
+			&c.Address.State,
+			&c.Address.PostalCode,
+			&c.Address.Country,
+			&c.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		results = append(results, c)
+	}
+	return results, rows.Err()
 }
