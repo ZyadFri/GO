@@ -230,10 +230,32 @@ The script prints out each HTTP response. Look for 200 OK, 201 Created, etc.
     
 
 
-### Screenshots
+## Screenshots
 
-## Ping (Unprotected)
+###Ping (Unprotected)
 ![image](https://github.com/user-attachments/assets/56aecbc8-0ed5-42c9-9f82-b21bffecfbe6)
-
+### Login (Get JWT)
+![image](https://github.com/user-attachments/assets/5a44e1a8-a6b8-40ad-8bc0-b424bb012183)
+### Create Author
+![image](https://github.com/user-attachments/assets/fc7f68b9-0791-4199-92f0-7dadd69f638a)
+![image](https://github.com/user-attachments/assets/e16f8ca4-3bc5-4837-86f3-246b3ccb3d0f)
+### List All Authors
+![image](https://github.com/user-attachments/assets/cc6bad90-a251-4eab-810b-49527b633132)
+### Get Author by ID
+![image](https://github.com/user-attachments/assets/5b6486fd-c97c-4718-9a02-64ec4f8c8623)
+### Update Author
+![image](https://github.com/user-attachments/assets/79ef284c-008d-4fb3-829b-c0c27195fe61)
+### Delete Author
+![image](https://github.com/user-attachments/assets/f46aafaf-4be9-4b3a-a2a2-b9a67ab7b19d)4
+### Create Book
+![image](https://github.com/user-attachments/assets/1ad5597c-2596-4019-9c8c-8b9014bdfa6a)
+##  List All Books (with optional search queries)
+![image](https://github.com/user-attachments/assets/4abc98e8-7756-4bb2-9792-74be69a61eea)
+##  Create Customer
+![image](https://github.com/user-attachments/assets/1cf4bf74-1891-41d1-899a-e4216e0313e2)
+### Create Order (with items)
+![image](https://github.com/user-attachments/assets/aac6ffd6-633b-40f7-bd24-4f10e43c7f9d)
+### Fetch Sales Reports
+![image](https://github.com/user-attachments/assets/3a296e1c-3d53-4eb5-a47c-b23ab79d4c23)
 
 
