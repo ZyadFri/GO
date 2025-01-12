@@ -251,4 +251,4 @@ echo "============================="
 auth_curl "GET" "/api/reports/sales?start_date=2025-01-01&end_date=2025-12-31"
 
 echo "===== ALL TESTS COMPLETE ====="
-echo "You may now review the above HTTP status codes and JSON responses."
+
