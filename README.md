@@ -232,7 +232,7 @@ The script prints out each HTTP response. Look for 200 OK, 201 Created, etc.
 
 ## Screenshots
 
-###Ping (Unprotected)
+### Ping (Unprotected)
 ![image](https://github.com/user-attachments/assets/56aecbc8-0ed5-42c9-9f82-b21bffecfbe6)
 ### Login (Get JWT)
 ![image](https://github.com/user-attachments/assets/5a44e1a8-a6b8-40ad-8bc0-b424bb012183)
